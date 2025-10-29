@@ -1,7 +1,12 @@
-FROM node:20-alpine
-WORKDIR /app/web
+FROM node:18
+
+WORKDIR /usr/src/app
 COPY web/package*.json ./
-RUN npm ci --only=production
-COPY web/ .
+RUN npm ci --omit=dev
+
+# Copy source
+COPY web/ ./
+
+# not setting env here as per instructions
 EXPOSE 3000
-CMD ["node", "app.js"]
+CMD ["npm","start"]
