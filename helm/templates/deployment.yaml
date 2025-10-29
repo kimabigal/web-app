@@ -1,39 +1,55 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web
+  name: {{ .Values.deployment.name }}
+  labels:
+    app: {{ .Values.deployment.name }}
 spec:
-  replicas: {{ .Values.replicaCount | default 1 }}
+  replicas: {{ .Values.deployment.replicas }}
   selector:
     matchLabels:
-      app: web
+      app: {{ .Values.deployment.name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
-        app: web
+        app: {{ .Values.deployment.name }}
     spec:
+      imagePullSecrets:
+      - name: {{ .Values.deployment.imagePullSecretName }}
       containers:
-        - name: web
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
-          ports:
-            - containerPort: {{ .Values.service.targetPort }}
-          envFrom:
-            - configMapRef:
-                name: web-config
-            - secretRef:
-                name: web-secret
-          readinessProbe:
-            httpGet:
-              path: {{ .Values.probes.path }}
-              port: {{ .Values.probes.port }}
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: {{ .Values.probes.path }}
-              port: {{ .Values.probes.port }}
-            initialDelaySeconds: 10
-            periodSeconds: 20
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+      - name: {{ .Values.deployment.name }}
+        image: "{{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag }}"
+        imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.deployment.port }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.deployment.name }}-config
+        - secretRef:
+            name: {{ .Values.deployment.name }}-secret
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.deployment.probes.path }}
+            port: {{ .Values.deployment.probes.port }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.deployment.probes.path }}
+            port: {{ .Values.deployment.probes.port }}
+          initialDelaySeconds: 10
+          periodSeconds: 20
+        resources:
+          requests:
+            cpu: {{ .Values.deployment.resources.requests.cpu | quote }}
+            memory: {{ .Values.deployment.resources.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.deployment.resources.limits.cpu | quote }}
+            memory: {{ .Values.deployment.resources.limits.memory | quote }}
+
+

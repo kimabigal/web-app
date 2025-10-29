@@ -1,35 +1,38 @@
-image:
-  repository: myacr12067.azurecr.io/web-app
-  tag: "latest"
-  pullPolicy: IfNotPresent
+deployment:
+  name: web
+  replicas: 1
+  port: 3000
+  image:
+    repository: myacr12067.azurecr.io/web-app
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  imagePullSecretName: acr-pull
 
-replicaCount: 1
+  probes:
+    path: /health
+    port: 3000
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
 
 service:
-  type: LoadBalancer
+  name: web-service
   port: 80
-  targetPort: 3000
-
-probes:
-  path: /health
-  port: 3000
-
-resources:
-  requests:
-    cpu: "100m"
-    memory: "128Mi"
-  limits:
-    cpu: "500m"
-    memory: "512Mi"
+  type: LoadBalancer
 
 hpa:
-  enabled: true
   minReplicas: 1
   maxReplicas: 5
   cpuTarget: 50
 
-# Non-secret env (key: value)
-env: {}
+env:
+  NODE_ENV: "production"
 
-# Secret keys (values are NOT stored here; create the Secret in the cluster)
-secretEnv: {}
+secrets:
+  DB_USER: "appuser"
+  DB_PASS: "s3cr3t"
